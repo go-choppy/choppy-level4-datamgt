@@ -1,0 +1,22 @@
+{
+    {% if show_analysis_program == True %}
+    "analysis_pipeline": "{{ project.analysis_pipeline or 'null' }}",
+    "data_file_md5": "{{ project.data_file_md5 or 'null' }}",
+    "data_file_name": "{{ project.data_file_name or 'null' }}",
+    "data_type": "{{ project.data_type or 'null' }}",
+    "import_data_program": "{{ project.import_data_program or 'null' }}",
+    "normalized": "{{ project.normalized or 'null' }}",
+    "normalized_method": "{{ project.normalized_method or 'null' }}",
+    {% endif %}
+    {% if show_src_project == True %}
+    "src_project_id": "{{ project.src_project_id or 'null' }}",
+    "src_project_name": "{{ project.src_project_name or 'null' }}",
+    {% endif %}
+    "project_id": "{{ project.id or 'null' }}",
+    "project_name": "{{ project.project_name or 'null' }}",
+    "num_of_samples": "{{ project.num_of_samples or 'null' }}",
+    "description": "{{ project.description or 'null' }}",
+    "created_date": "{{ project.created_date or 'null' }}",
+    "url": "{{ project.url or 'null' }}",
+    "version": "{{ project.version or 'null' }}"
+}

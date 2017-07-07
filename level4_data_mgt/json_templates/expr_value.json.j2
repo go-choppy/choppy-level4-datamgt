@@ -1,0 +1,23 @@
+{
+    {% if show_gene_ensembl == True %}
+    "gene_ensembl_id": ["{{ expr_value.gene_ensembl_id or 'null' }}"],
+    {% endif %}
+    {% if show_transcript_ensembl == True %}
+    "transcript_ensembl_id": ["{{ expr_value.transcript_ensembl_id or 'null' }}"],    
+    {% endif %}
+    {% if show_clinical_data_id == True %}
+	"clinical_data_id_lst": ["{{ expr_value.clinical_data_id_lst or 'null' }}"],
+    {% endif %}
+    {% if show_samples_data_id == True %}
+	"samples_data_id_lst": ["{{ expr_value.samples_data_id_lst or 'null' }}"],
+    {% endif %}
+    {% if show_phenotype_data_id == True %}
+	"phenotype_data_id_lst": ["{{ expr_value.phenotype_data_id_lst or 'null' }}"],
+    {% endif %}
+    "project_id": "{{ expr_value.project_ref.id or 'null' }}",
+    "project_name": "{{ expr_value.project_name or 'null' }}",
+    "subproject_name": ["{{ expr_value.subproject_name or 'null' }}"],
+    "expr_value_lst": [{{ expr_value.expr_value_lst or 'null' }}],
+    "species": ["{{ expr_value.species or 'null' }}"],
+    "source_type": ["{{ expr_value.source_type or 'null' }}"]
+}

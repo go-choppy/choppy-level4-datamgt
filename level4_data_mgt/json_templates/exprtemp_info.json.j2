@@ -1,0 +1,21 @@
+{
+    "data": {
+        {% if show_id == True %}
+        "id": "{{ expr_value.id or 'null' }}",
+        {% endif %}
+        "gene_ensembl_id_lst": {{ expr_value.gene_ensembl_id_lst or 'null' }},
+        "transcript_ensembl_id_lst": {{ expr_value.transcript_ensembl_id or expr_value.transcript_ensembl_id_lst or 'null' }},    
+        "clinical_data_id_lst": {{ expr_value.clinical_data_id_lst or 'null' }},
+        "samples_data_id_lst": {{ expr_value.samples_data_id_lst or 'null' }},
+        "phenotype_data_id_lst": {{ expr_value.phenotype_data_id_lst or 'null' }},
+        "query_condition_md5": "{{ expr_value.query_condition_md5 or 'null' }}",
+        "project_ref": "{{ expr_value.project_id or expr_value.project_ref or 'null' }}",
+        "project_name": "{{ expr_value.project_name or 'null' }}",
+        "subproject_name_lst": {{ expr_value.subproject_name or expr_value.subproject_name_lst or 'null' }},
+        "expr_value_lst": {{ expr_value.expr_value_lst or 'null' }},
+        "species_lst": {{ expr_value.species or expr_value.species_lst or 'null' }},
+        "source_type_lst": {{ expr_value.source_type or expr_value.source_type_lst or 'null' }}
+    },
+    "msg": "{{ message or expr_value.message }}",
+    "error_code": "{{ error_code or expr_value.error_code }}"
+}

@@ -1,0 +1,23 @@
+{
+    "SECRET_KEY": "the quick brown fox jumps over the lazy dog",
+    "MONGODB_SETTINGS": {
+        "db": "nordata_server",
+        "host": "localhost",
+        "port": 27017
+    },
+    "HTTPHOST": "http://localhost",
+    "HTTPPORT": 5555,
+    "STREAM_HANDLER_STATUS": "False",
+    "LOGFILE": "data_mgt.log",
+    "LOGLEVEL": "DEBUG",
+    "DBDataDir": "data_mgt",
+    "API": "/level4data/api/v1",
+    "TEMPLATES": {
+        "EXPR_VALUE_J2_FILE": "expr_value.json.j2",
+        "PROJECT_INFO_J2_FILE": "project_info.json.j2",
+        "ANALYSIS_PROGRAM_J2_FILE": "analysis_program.json.j2",
+        "SAMPLE_DATA_J2_FILE": "sample_data.json.j2",
+        "CLINICAL_DATA_J2_FILE": "clinical_data.json.j2",
+        "EXPRTEMP_INFO_J2_FILE": "exprtemp_info.json.j2"
+    }
+}
