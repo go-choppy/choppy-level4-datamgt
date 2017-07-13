@@ -1,0 +1,30 @@
+{
+    "project_id": "{{ mutation_info.project_ref.id or 'null' }}",
+    "species": ["{{ mutation_info.species or 'null' }}"],
+    "source_type": ["{{ mutation_info.source_type or 'null' }}"],
+    {% if show_clinical_data_id == True %}
+    "clinical_data_id_lst": ["{{ mutation_info.clinical_data_id_lst or 'null' }}"],
+    {% endif %}
+    {% if show_samples_data_id == True %}
+    "samples_data_id_lst": ["{{ mutation_info.samples_data_id_lst or 'null' }}"],
+    {% endif %}
+    {% if show_phenotype_data_id == True %}
+    "phenotype_data_id_lst": ["{{ mutation_info.phenotype_data_id_lst or 'null' }}"],
+    {% endif %}
+    "subproject_name": ["{{ mutation_info.subproject_name or 'null' }}"],
+    "project_name": "{{ mutation_info.project_name }}",
+    "gene_ensembl_id" : ["{{ mutation_info.gene_ensembl_id or 'null' }}"],
+    "transcript_ensembl_id" : ["{{ mutation_info.transcript_ensembl_id or 'null' }}"],
+    "chromosome": ["{{ mutation_info.chromosome or 'null' }}"],
+    "start_position" : ["{{ mutation_info.start_position or 'null' }}"],
+    "end_position" : ["{{ mutation_info.end_position or 'null' }}"],
+    "dbsnp_rs" : ["{{ mutation_info.dbsnp_rs or 'null' }}"],
+    "variant_classification" : ["{{ mutation_info.variant_classification or 'null' }}"],
+    "variant_type": ["{{ mutation_info.variant_type or 'null' }}"],
+    "reference_allele" : ["{{ mutation_info.reference_allele or 'null' }}"],
+    "tumor_seq_allele1" : ["{{ mutation_info.tumor_seq_allele1 or 'null' }}"],
+    "tumor_seq_allele2" : ["{{ mutation_info.tumor_seq_allele2 or 'null' }}"],
+    "tumor_sample_barcode" : ["{{ mutation_info.tumor_sample_barcode or 'null' }}"],
+    "transcript_strand" : ["{{ mutation_info.transcript_strand or 'null' }}"],
+    "protein_change" : ["{{ mutation_info.protein_change or 'null' }}"]
+}

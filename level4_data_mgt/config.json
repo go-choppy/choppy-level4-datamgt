@@ -18,6 +18,7 @@
         "ANALYSIS_PROGRAM_J2_FILE": "analysis_program.json.j2",
         "SAMPLE_DATA_J2_FILE": "sample_data.json.j2",
         "CLINICAL_DATA_J2_FILE": "clinical_data.json.j2",
-        "EXPRTEMP_INFO_J2_FILE": "exprtemp_info.json.j2"
+        "EXPRTEMP_INFO_J2_FILE": "exprtemp_info.json.j2",
+        "MUTATION_J2_FILE": "mutation_info.json.j2"
     }
 }

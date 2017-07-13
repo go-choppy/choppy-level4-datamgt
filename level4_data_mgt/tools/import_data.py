@@ -6,8 +6,8 @@ sys.path.append(working_dir)
 
 import argparse, itertools, hashlib, shutil, datetime
 from bson import json_util
+from level4_data_mgt.models import GeneExpr, TranscriptExpr, Project, Mutation
 from level4_data_mgt.models import get_project_id, exist_project, exist_ensembl_id
-from level4_data_mgt.models import GeneExpr, TranscriptExpr, Project
 from level4_data_mgt.models import expr_value_j2_file
 from level4_data_mgt.models import project_info_j2_file
 from level4_data_mgt.models import sample_data_j2_file
@@ -15,6 +15,7 @@ from level4_data_mgt.models import analysis_program_j2_file
 from level4_data_mgt.models import clinical_data_j2_file
 from level4_data_mgt.models import exist_analysis_program
 from level4_data_mgt import DBDataDir
+from level4_data_mgt.errors import HeaderError
 
 created_author = 'YJC'
 created_date = datetime.datetime(2017, 5, 20, 2, 36, 54, 942880)
@@ -25,12 +26,11 @@ description = '''
 def md5(file_path):
     return hashlib.md5(open(file_path, 'rb').read()).hexdigest()
 
-def project2json(file_obj, db_type, project_name = "None", file_name = "output.json", 
+def project2json(file_obj, db_type, project_name = None, file_name = "output.json", 
                  template = project_info_j2_file):
     pass
 
-    
-def analysprogram2json(file_obj, db_type, project_name = "None", file_name = "output.json"):
+def analysprogram2json(file_obj, db_type, project_name = None, file_name = "output.json"):
     import_data_program = os.path.abspath(__file__)
     md5 = md5(import_data_program)
     if exist_analysis_program(md5):
@@ -71,7 +71,7 @@ def clinicaldata2json():
 def sampledata2json():
     pass
 
-def gene2json(file_obj, db_type, project_name = "None", file_name = "output.json", template = None, **kwargs):
+def gene2json(file_obj, db_type, project_name = None, file_name = "output.json", template = None, **kwargs):
     if project_name is None:
         print("必须指定project_name")
         sys.exit(1)
@@ -123,7 +123,7 @@ def gene2json(file_obj, db_type, project_name = "None", file_name = "output.json
                     db_dict["transcript_ensembl_id"] = ensembl_id
                 output.write(json_util.dumps(db_dict))
 
-def genemean2json(file_obj, db_type, project_name = "None", file_name = "output.json", template = None, **kwargs):
+def genemean2json(file_obj, db_type, project_name = None, file_name = "output.json", template = None, **kwargs):
     '''
     genemean文件header:
     ID  Colon   Kidney  Uterus
@@ -143,6 +143,8 @@ def genemean2json(file_obj, db_type, project_name = "None", file_name = "output.
         sys.exit(1)
 
     print("打开文件: %s" % file_name)
+    subproject_name = kwargs.get('subproject_name')
+    species = kwargs.get('species')
     with open(file_name, 'w') as output:
         for line in file_obj:
             gene_info = [i.strip('. \n\r') for i in line.split('\t')]
@@ -151,8 +153,6 @@ def genemean2json(file_obj, db_type, project_name = "None", file_name = "output.
                 sys.exit(1)
             else:
                 ensembl_id = gene_info[0]
-                subproject_name = kwargs.get('subproject_name')
-                species = 'human'
                 for item, value in zip(header[1:], gene_info[1:]):
                     source_type = item
                     expr_value_lst = value
@@ -173,26 +173,91 @@ def genemean2json(file_obj, db_type, project_name = "None", file_name = "output.
                         db_dict["transcript_ensembl_id"] = ensembl_id
                     output.write(json_util.dumps(db_dict))
 
-db_class_dict = {'gene_expr': GeneExpr, 'transcript_expr': TranscriptExpr, 'project': Project}
+def check_header(header, standard_header):
+    for item in standard_header:
+        if item not in header:
+            raise HeaderError("文件(Header)必须包含以下字段： %s" % item)
+
+def mutation2json(file_obj, db_type, project_name = None, file_name = "output.json", template = None, **kwargs):
+    mutation_file_header = ["species", "source_type", "gene_ensembl_id", "chromosome", 
+                            "start_position", "end_position", "dbsnp_rs",
+                            "transcript_ensembl_id", "variant_classification", 
+                            "variant_type", "reference_allele", "tumor_seq_allele1", 
+                            "tumor_seq_allele2", "tumor_sample_barcode", 
+                            "transcript_strand", "protein_change"]
+    if project_name is None:
+        print("必须指定project_name")
+        sys.exit(1)
+
+    header = file_obj.readline()
+    header = [i.strip('. \n\r"') for i in header.split('\t')]
+    check_header(header, mutation_file_header)
+    print("header: %s" % str(header))
+
+    if exist_project(project_name):
+        project_id = get_project_id(project_name)
+    else:
+        print("%s不在Project数据库，请先上传相关Project信息." % project_name)
+        sys.exit(1)
+
+    print("打开文件: %s" % file_name)
+    subproject_name = kwargs.get('subproject_name')
+    with open(file_name, 'w') as output:
+        for line in file_obj:
+            mutation_info = [i.strip('. \n\r"') for i in line.split('\t')]
+            if len(mutation_info) != len(header):
+                print("列数不相等")
+                sys.exit(1)
+            else:
+                mutation_dict = dict(zip(header, mutation_info))
+                db_dict = {
+                    "chromosome": mutation_dict.get('chromosome'),
+                    "clinical_data_id_lst": None,
+                    "dbsnp_rs": mutation_dict.get('dbsnp_rs'),
+                    "end_position": mutation_dict.get('end_position'),
+                    "gene_ensembl_id": mutation_dict.get('gene_ensembl_id'),
+                    "phenotype_data_id_lst": None,
+                    "project_name": project_name,
+                    "project_ref": project_id, 
+                    "protein_change": mutation_dict.get('protein_change'),
+                    "reference_allele": mutation_dict.get('reference_allele'),
+                    "samples_data_id_lst": None,
+                    "source_type": mutation_dict.get('source_type'),
+                    "species": mutation_dict.get('species'),
+                    "start_position": mutation_dict.get('start_position'),
+                    "subproject_name": subproject_name,
+                    "transcript_strand": mutation_dict.get('transcript_strand'),
+                    "transcript_ensembl_id": mutation_dict.get('transcript_ensembl_id'),
+                    "tumor_sample_barcode": mutation_dict.get('tumor_sample_barcode'),
+                    "tumor_seq_allele1": mutation_dict.get('tumor_seq_allele1'),
+                    "tumor_seq_allele2": mutation_dict.get('tumor_seq_allele2'),
+                    "variant_classification": mutation_dict.get('variant_classification'),
+                    "variant_type": mutation_dict.get('variant_type'),
+                }
+                output.write(json_util.dumps(db_dict))
+
+
+db_class_dict = {'gene_expr': GeneExpr, 'transcript_expr': TranscriptExpr, 'project': Project, 'mutation': Mutation}
 template_file_dict = {'expr_value_j2': expr_value_j2_file, 'project_info_j2': project_info_j2_file, 
                       'analysis_program_j2_file': analysis_program_j2_file, 'sample_data_j2': sample_data_j2_file,
                       'clinical_data_j2': clinical_data_j2_file}
 
 store_func_dict = {'project_info': project2json, 'gene_exprs': gene2json, 'transcript_exprs': transcript2json,
                    'clinical_data': clinicaldata2json, 'sample_data': sampledata2json, 'gene_exprs_mean': genemean2json,
-                   'transcript_exprs_mean': transcriptmean2json}
+                   'transcript_exprs_mean': transcriptmean2json, 'mutation_info': mutation2json}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Import specified file content into database.')
     parser.add_argument('--dbtype', required=True, 
-                        choices=['gene_expr', 'transcript_expr', 'project'],
-                        help='data type, the program support three kind of files')
+                        choices=['gene_expr', 'transcript_expr', 'project', 'mutation'],
+                        help='Database Class Type')
     parser.add_argument('--jsontype', required=True, 
-                        choices=['gene_exprs', 'transcript_exprs', 'project_info', 'gene_exprs_mean', "transcript_exprs_mean"],
-                        help='data type, the program support three kind of files')
-    parser.add_argument('--project-name', default=None, help="Project name")
-    parser.add_argument('--subproject-name', default=None, help="Subproject name")
-    parser.add_argument('--output-file', default="output.json", help="Output file name")
+                        choices=['gene_exprs', 'transcript_exprs', 'project_info', 
+                                 'gene_exprs_mean', 'transcript_exprs_mean', 'mutation_info'],
+                        help='The program will call a function related with your specified json type to generate a bson file.')
+    parser.add_argument('--project-name', default=None, help="Project name", required=True)
+    parser.add_argument('--subproject-name', default=None, help="Subproject name", required=True)
+    parser.add_argument('--output-file', default="output.json", help="Output file name", required=True)
     parser.add_argument('file_name', help='A file that match type')
     args = parser.parse_args()
 

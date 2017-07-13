@@ -4,7 +4,7 @@ import copy
 from flask import Blueprint, request, render_template
 from flask_restful import Api
 from level4_data_mgt import app
-from .views import Project, Gene, Transcript, Test, ExprTemp
+from .views import Project, Gene, Transcript, Test, ExprTemp, Mutation
 
 ctx = app.test_request_context()
 ctx.push()
@@ -33,6 +33,7 @@ api.add_resource(Transcript, '/transcripts/queries', endpoint="transcripts_queri
 api.add_resource(ExprTemp, '/exprinfo/<expr_info_id>', endpoint="transcripts_expr_info")
 # 从ExprTemp获取表达信息，query_condition_md5查询条件组成的字符串对应的md5值
 # api.add_resource(ExprTemp, '/exprinfo/<query_condition_md5>', endpoint="transcripts_expr_info_query")
+api.add_resource(Mutation, '/mutations/<gene_ensembl_id>', endpoint="mutation")
 
 # Routes Test URLs
 @app.route('/test_gene')
@@ -46,3 +47,7 @@ def transcript_exprs():
 @app.route('/test_transcripts')
 def transcripts():
     return render_template("transcript_expr.html")
+
+@app.route('/test_mutation')
+def mutation():
+    return render_template("mutation.html", api_prefix=api_prefix + '/mutation')

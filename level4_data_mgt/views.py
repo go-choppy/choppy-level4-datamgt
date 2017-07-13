@@ -1,8 +1,9 @@
 import copy, json
 from flask import jsonify, request
 from flask_restful import Resource, reqparse, fields
-from .models import get_project_info, get_expr_by_project, GeneExpr, TranscriptExpr
-from .models import ExprInfo, get_exprtemp_info, get_expr_info_by_lst, render_template
+from .models import GeneExpr, TranscriptExpr
+from .models import get_exprtemp_info, get_expr_info_by_lst, render_template
+from .models import get_project_info, get_expr_by_project, get_mutation_by_project
 from .models import write_expr_info
 from .utils import url, gen_md5
 from level4_data_mgt.json_loaders import call_loader
@@ -211,6 +212,33 @@ class ExprTemp(Resource):
         expr_info = call_loader(args.get('loader'), json_obj = expr_info)
         app.logger.debug("expr_info: %s" % expr_info)
         return jsonify(expr_info)
+
+class Mutation(Resource):
+    def get(self, gene_ensembl_id):
+        parser = reqparse.RequestParser()
+        arguments = {
+            'project_name': str,
+            'subproject_name': str,
+            'loader': str,
+            'show_transcript_ensembl': bool,
+            'show_clinical_data_id': bool,
+            'show_samples_data_id': bool,
+            'show_phenotype_data_id': bool
+        }
+        parser = add_argument(parser, arguments)
+        args = parser.parse_args()
+        args['gene_ensembl_id'] = gene_ensembl_id
+        if gene_ensembl_id and args.get('project_name'):
+            error, message, mutation_info = get_mutation_by_project(**args)
+            if error:
+                app.logger.debug("error: %s" % message)
+                return {"message": message}, 404
+            mutation_info['message'] = message
+            mutation_info = call_loader(args.get('loader'), json_obj = mutation_info)
+            app.logger.debug("mutation_info: %s" % mutation_info)
+            return jsonify(mutation_info)
+        else:
+            return {"message": 'No ensembl id'}, 400
 
 
 class Test(Resource):

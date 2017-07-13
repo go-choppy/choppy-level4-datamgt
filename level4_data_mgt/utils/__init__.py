@@ -42,3 +42,9 @@ def merge_dicts(func, *args):
         return args[0]
     else:
         return func(args[0], merge_dicts(func, *args[1:]))
+
+def uniq_item(dict1):
+    for key, value in dict1.items():
+        if isinstance(value, list) and len(set(value)) == 1:
+            dict1[key] = list(set(value))
+    return dict1

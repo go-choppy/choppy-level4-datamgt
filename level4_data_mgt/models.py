@@ -3,7 +3,7 @@ import os, json, bson
 from mongoengine.queryset import DoesNotExist
 from jinja2 import Environment, PackageLoader
 from level4_data_mgt import app, db, JSON_TEMPLATES_DIR
-from .utils import merge_expr_obj, merge_dicts
+from .utils import merge_expr_obj, merge_dicts, uniq_item
 
 templates_conf = app.config.get("TEMPLATES")
 expr_value_j2_file = templates_conf.get("EXPR_VALUE_J2_FILE")
@@ -12,6 +12,7 @@ analysis_program_j2_file = templates_conf.get("ANALYSIS_PROGRAM_J2_FILE")
 sample_data_j2_file = templates_conf.get("SAMPLE_DATA_J2_FILE")
 clinical_data_j2_file = templates_conf.get("CLINICAL_DATA_J2_FILE")
 exprtemp_info_j2_file = templates_conf.get("EXPRTEMP_INFO_J2_FILE")
+mutation_j2_file = templates_conf.get("MUTATION_J2_FILE")
 
 env = Environment(loader=PackageLoader('level4_data_mgt', 'json_templates'), trim_blocks = True, lstrip_blocks = True)
 
@@ -125,14 +126,72 @@ class TranscriptExpr(db.Document):
     '''
     clinical_data_id_lst = db.ListField(db.ReferenceField('ClinicalData', required = True), required = True)
     expr_value_lst = db.ListField(db.FloatField(), required = True)
-    transcript_ensembl_id = db.StringField(max_length = 50, required = True)
-    project_ref = db.ReferenceField(Project, required = True)
-    subproject_name = db.StringField(max_length = 30, required = True)
-    project_name = db.StringField(max_length = 30, required = True)
-    samples_data_id_lst = db.ListField(db.ReferenceField('SampleData', required = True), required = True)
-    species = db.StringField(max_length = 10, required = True)
-    source_type = db.StringField(max_length = 50, required = True)
     phenotype_data_id_lst = db.ListField(db.ReferenceField('PhenotypeData', required = True), required = True)
+    project_name = db.StringField(max_length = 30, required = True)
+    project_ref = db.ReferenceField(Project, required = True)
+    samples_data_id_lst = db.ListField(db.ReferenceField('SampleData', required = True), required = True)
+    source_type = db.StringField(max_length = 50, required = True)
+    species = db.StringField(max_length = 10, required = True)
+    subproject_name = db.StringField(max_length = 30, required = True)
+    transcript_ensembl_id = db.StringField(max_length = 50, required = True)
+
+class Mutation(db.Document):
+    chromosome = db.StringField(max_length = 10, required = True)
+    clinical_data_id_lst = db.ListField(db.ReferenceField('ClinicalData', required = True), required = True)
+    dbsnp_rs = db.StringField(max_length = 50, required = True)
+    end_position = db.StringField(max_length = 50, required = True)
+    gene_ensembl_id = db.StringField(max_length = 50, required = True)
+    transcript_ensembl_id = db.StringField(max_length = 50, required = True)
+    phenotype_data_id_lst = db.ListField(db.ReferenceField('PhenotypeData', required = True), required = True)
+    project_name = db.StringField(max_length = 30, required = True)
+    project_ref = db.ReferenceField(Project, required = True)
+    protein_change = db.StringField(max_length = 50, required = True)
+    reference_allele = db.StringField(max_length = 50, required = True)
+    samples_data_id_lst = db.ListField(db.ReferenceField('SampleData', required = True), required = True)
+    source_type = db.StringField(max_length = 50, required = True)
+    species = db.StringField(max_length = 10, required = True)
+    start_position = db.StringField(max_length = 50, required = True)
+    subproject_name = db.StringField(max_length = 30, required = True)
+    transcript_strand = db.StringField(max_length = 50, required = True)
+    tumor_sample_barcode = db.StringField(max_length = 50, required = True)
+    tumor_seq_allele1 = db.StringField(max_length = 50, required = True)
+    tumor_seq_allele2 = db.StringField(max_length = 50, required = True)
+    variant_classification = db.StringField(max_length = 50, required = True)
+    variant_type = db.StringField(max_length = 50, required = True)
+
+def get_mutation_by_project(project_name, subproject_name, gene_ensembl_id=None, transcript_ensembl_id=None, **kwargs):
+    query_args = {}
+    projects = Project.objects(project_name=project_name)
+    if not projects:
+        return True, '%s not found' % project_name, False
+
+    if gene_ensembl_id:
+        query_args['gene_ensembl_id'] = gene_ensembl_id
+
+    if transcript_ensembl_id:
+        query_args['transcript_ensembl_id'] = transcript_ensembl_id
+
+    if subproject_name:
+        query_args['subproject_name'] = subproject_name
+
+    app.logger.debug("project_id: %s" % str(projects[0]['id']))
+    app.logger.debug("查询: %s" % query_args)
+
+    try:
+        mutation_lst = Mutation.objects(**query_args, project_ref__in = projects)
+        app.logger.debug("mutation_lst: %s" % mutation_lst)
+        if mutation_lst:
+            app.logger.debug("检索结果: %s" % len(mutation_lst))
+            results = [json.loads(render_template(mutation_j2_file, mutation_info=mutation_info, **kwargs))\
+                       for mutation_info in mutation_lst]
+            return False, 'success', uniq_item(merge_dicts(merge_expr_obj, *results))
+        else:
+            query_args.update({"project_name": project_name})
+            raise DoesNotExist("Can't find %s" % query_args)
+    except DoesNotExist as e:
+        app.logger.warning("未找到%s" % query_args)
+        return True, str(e), False
+
 
 def exist_ensembl_id(project_name, subproject_name, ensembl_id, expr_cls):
     kargs = {}
@@ -160,6 +219,8 @@ def get_expr_by_project(project_name, subproject_name, ensembl_id, expr_cls, **k
         kwargs['show_gene_ensembl'] = True
 
     projects = Project.objects(project_name=project_name)
+    if not projects:
+        return True, '%s not found' % project_name, False
     app.logger.debug("project_id: %s" % projects[0].id)
     if subproject_name:
         query_args['subproject_name'] = subproject_name
