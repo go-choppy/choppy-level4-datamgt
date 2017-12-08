@@ -74,6 +74,21 @@ def get_project_info(project_name, **kwargs):
         app.logger.warning("未找到%s" % project_name)
         return True, str(e), False
 
+def get_all_projects(**kwargs):
+    '''
+    kwargs指定field是否显示在最终的结果中，可以接受N个field
+    '''
+    projects = []
+    try:
+        for project in Project.objects:
+            app.logger.info(project)
+            if project:
+                project_info = json.loads(render_template(project_info_j2_file, project = project, **kwargs))
+                projects.append(project_info)
+        return False, 'success', projects
+    except DoesNotExist as e:
+        app.logger.warning("未找到任何project")
+        return True, str(e), False
 
 def exist_project(project_name):
     '''
@@ -240,7 +255,7 @@ def get_expr_by_project(project_name, subproject_name, ensembl_id, expr_cls, **k
             raise DoesNotExist("Can't find %s" % query_args)
     except DoesNotExist as e:
         app.logger.warning("未找到%s, %s" % (project_name, ensembl_id))
-        return True, str(e), False   
+        return True, str(e), False
 
 def get_exprs(project_name, ensembl_id, expr_cls, **kwargs):
     pass

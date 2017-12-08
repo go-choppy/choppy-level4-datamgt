@@ -4,7 +4,7 @@ import copy
 from flask import Blueprint, request, render_template
 from flask_restful import Api
 from level4_data_mgt import app
-from .views import Project, Gene, Transcript, Test, ExprTemp, Mutation
+from .views import Project, Gene, Transcript, Test, ExprTemp, Mutation, ProjectList
 
 ctx = app.test_request_context()
 ctx.push()
@@ -25,6 +25,7 @@ api = Api(level4_data_mgt_bp, prefix=api_prefix, errors=errors)
 # Routes RESTful API
 api.add_resource(Test, '/', endpoint="test")
 api.add_resource(Project, '/project/<project_name>', endpoint="project")
+api.add_resource(ProjectList, '/projects', endpoint="project_list")
 api.add_resource(Gene, '/gene/<gene_ensembl_id>', endpoint="gene")
 api.add_resource(Transcript, '/transcript/<transcript_ensembl_id>', endpoint="transcript")
 # POST 同时请求多个Transcript ID

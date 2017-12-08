@@ -4,7 +4,7 @@ from flask_restful import Resource, reqparse, fields
 from .models import GeneExpr, TranscriptExpr
 from .models import get_exprtemp_info, get_expr_info_by_lst, render_template
 from .models import get_project_info, get_expr_by_project, get_mutation_by_project
-from .models import write_expr_info
+from .models import write_expr_info, get_all_projects
 from .utils import url, gen_md5
 from level4_data_mgt.json_loaders import call_loader
 from level4_data_mgt import app
@@ -47,6 +47,31 @@ class Project(Resource):
         app.logger.info("project_info: %s" % project_info)
         return jsonify(project_info)
 
+class ProjectList(Resource):
+    def get(self):
+        '''
+        Get all projects.
+        '''
+        # 定义argument
+        parser = reqparse.RequestParser()
+        arguments = {
+            'show_src_project': bool,
+            'show_analysis_program': bool
+        }
+
+        parser = add_argument(parser, arguments)
+        args = parser.parse_args()
+
+        response = {}
+        error, message, projects = get_all_projects(**args)
+        response['api_uri'] = url('api.project_list', absolute=True)
+        response['message'] = message
+        if error and not message:
+            response['message'] = ''
+        response['data'] = projects
+        app.logger.info("response: %s" % response)
+        return jsonify(response)
+
 class Gene(Resource):
     def get(self, gene_ensembl_id):
         '''
@@ -74,8 +99,8 @@ class Gene(Resource):
         if not expr_info:
             expr_info = {}
         expr_info['gene_ensembl_id'] = gene_ensembl_id
-        expr_info['api_uri'] = url('api.gene', absolute=True, 
-                                    gene_ensembl_id=gene_ensembl_id, 
+        expr_info['api_uri'] = url('api.gene', absolute=True,
+                                    gene_ensembl_id=gene_ensembl_id,
                                     project_name=project_name)
         expr_info['message'] = message
         expr_info = call_loader(args.get('loader'), json_obj = expr_info)
@@ -95,7 +120,7 @@ class Transcript(Resource):
             'show_transcript_ensembl': bool,
             'show_clinical_data_id': bool,
             'show_samples_data_id': bool,
-            'show_phenotype_data_id': bool            
+            'show_phenotype_data_id': bool
         }
         parser = add_argument(parser, arguments)
         app.logger.info('获取%s数据' % transcript_ensembl_id)
@@ -109,7 +134,7 @@ class Transcript(Resource):
         if not expr_info:
             expr_info = {}
         expr_info['transcript_ensembl_id'] = transcript_ensembl_id
-        expr_info['api_uri'] = url('api.transcript', absolute=True, 
+        expr_info['api_uri'] = url('api.transcript', absolute=True,
                                     transcript_ensembl_id=transcript_ensembl_id,
                                     project_name=project_name)
         expr_info['message'] = message
@@ -204,7 +229,7 @@ class ExprTemp(Resource):
             expr_info = {}
         error_code = '0'
         message = 'success'
-        template_str = render_template(exprtemp_info_j2_file, expr_value = expr_info, 
+        template_str = render_template(exprtemp_info_j2_file, expr_value = expr_info,
                                        show_id = True, error_code = error_code, message = message)
         app.logger.debug("Jinja2 Template: %s" % template_str)
         expr_info = json.loads(template_str.strip("'<>() ").replace('\'', '\"'))

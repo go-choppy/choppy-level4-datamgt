@@ -1,9 +1,9 @@
 {
     "SECRET_KEY": "the quick brown fox jumps over the lazy dog",
     "MONGODB_SETTINGS": {
-        "db": "nordata_server",
-        "host": "localhost",
-        "port": 27017
+        "db": "pgx_level4",
+        "host": "10.157.72.40",
+        "port": 1998
     },
     "HTTPHOST": "http://localhost",
     "HTTPPORT": 5555,
