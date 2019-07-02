@@ -1,10 +1,10 @@
 # -*- encoding:utf-8 -*-
 # import libraries
-import copy
 from flask import Blueprint, request, render_template
 from flask_restful import Api
 from level4_data_mgt import app
-from .views import Project, Gene, Transcript, Test, ExprTemp, Mutation, ProjectList
+from .views import (Project, Gene, Transcript, Test, ExprTemp, Mutation,
+                    ProjectList)
 
 ctx = app.test_request_context()
 ctx.push()
